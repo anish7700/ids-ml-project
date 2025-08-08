@@ -1,0 +1,42 @@
+from scapy.all import sniff
+import joblib
+import time
+import numpy as np
+
+MODEL_PATH = "models/ids_pipeline.joblib"
+
+def extract_features_from_packets(packets):
+    if len(packets) == 0:
+        return None
+    sizes = [len(p) for p in packets]
+    packet_count = len(packets)
+    avg_size = sum(sizes)/packet_count
+    proto_counts = {"TCP":0,"UDP":0,"ICMP":0,"OTHER":0}
+    for p in packets:
+        if p.haslayer("TCP"): proto_counts["TCP"] += 1
+        elif p.haslayer("UDP"): proto_counts["UDP"] += 1
+        elif p.haslayer("ICMP"): proto_counts["ICMP"] += 1
+        else: proto_counts["OTHER"] += 1
+    tcp_ratio = proto_counts["TCP"]/packet_count
+    udp_ratio = proto_counts["UDP"]/packet_count
+    icmp_ratio = proto_counts["ICMP"]/packet_count
+    return np.array([packet_count, avg_size, tcp_ratio, udp_ratio, icmp_ratio]).reshape(1,-1)
+
+def main_sniff(window_seconds=5):
+    print("Loading model...")
+    model = joblib.load(MODEL_PATH)
+    print("Starting sniff. Use Ctrl+C to stop.")
+    while True:
+        packets = sniff(timeout=window_seconds)
+        feat = extract_features_from_packets(packets)
+        if feat is None:
+            continue
+        try:
+            pred = model.predict(feat)
+            print(f"[{time.ctime()}] Predicted: {pred[0]} -- packets: {len(packets)}")
+        except Exception as e:
+            print("Prediction failed:", e)
+
+if __name__ == "__main__":
+    main_sniff()
+
