@@ -1,0 +1,16 @@
+ids-ml-project/
+├─ data/
+│  ├─ KDDTrain+.txt
+│  └─ KDDTest+.txt
+├─ src/
+│  ├─ load_data.py
+│  ├─ preprocess.py
+│  ├─ train_model.py
+│  ├─ evaluate.py
+│  ├─ simulate_traffic.py
+│  └─ realtime_detector.py
+├─ models/
+│  └─ (model will be saved here after training)
+├─ requirements.txt
+├─ README.md
+└─ LICENSE
